@@ -31,30 +31,46 @@ COACHTECH お問い合わせフォーム開発プロジェクト（確認テス�
    `.env.example` をコピーして `.env` を作成します。
    ```bash
    cp .env.example .env
-   ```
+   .envに下記項目を設定してください
 
-3. **Dockerコンテナの起動（Laravel Sail）**
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=sail
+DB_PASSWORD=password
+   ```
+3. **Laravelパッケージのインストール**
+
+docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "$(pwd):/var/www/html" \
+    -w /var/www/html \
+    laravelsail/php82-composer:latest \
+    composer install --ignore-platform-reqs
+
+4. **Dockerコンテナの起動（Laravel Sail）**
    ```bash
    ./vendor/bin/sail up -d
    ```
 
-4. **依存パッケージのインストール**
+5. **依存パッケージのインストール**
    ```bash
    ./vendor/bin/sail composer install
    ./vendor/bin/sail npm install
    ```
 
-5. **アプリケーションキーの生成**
+6. **アプリケーションキーの生成**
    ```bash
    ./vendor/bin/sail artisan key:generate
    ```
 
-6. **データベースのマイグレーションと初期データ投入**
+7. **データベースのマイグレーションと初期データ投入**
    ```bash
    ./vendor/bin/sail artisan migrate:fresh --seed
    ```
 
-7. **フロントエンド資産のビルド（Viteの起動）**
+8. **フロントエンド資産のビルド（Viteの起動）**
    ```bash
    ./vendor/bin/sail npm run dev
    ```
