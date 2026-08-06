@@ -10,9 +10,11 @@ class TagSeeder extends Seeder
     public function run(): void
     {
         $tags = [
-            ['name' => '既卒'],
-            ['name' => '新卒'],
-            ['name' => '重要'],
+            ['name' => '質問'],
+            ['name' => '要望'],
+            ['name' => '不具合報告'],
+            ['name' => 'ご意見'],
+            ['name' => 'その他'],
         ];
 
         foreach ($tags as $tag) {

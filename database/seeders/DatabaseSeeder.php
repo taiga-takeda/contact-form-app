@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Database\Seeders\CategorySeeder;
 use Database\Seeders\TagSeeder;
+use Database\Seeders\UserSeeder;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -16,8 +17,10 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            UserSeeder::class,
             CategorySeeder::class,
             TagSeeder::class,
+            ContactSeeder::class,
         ]);
     }
 }
