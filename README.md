@@ -24,7 +24,7 @@ COACHTECH お問い合わせフォーム開発プロジェクト（確認テス�
 1. **リポジトリのクローン**
    ```bash
    git clone git@github.com:taiga-takeda/contact-form-app.git
-   cd Preparedblade-ConfirmationTest-ContactForm
+   cd contact-form-app
    ```
 
 2. **環境設定ファイルの準備**
