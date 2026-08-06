@@ -32,16 +32,15 @@ COACHTECH お問い合わせフォーム開発プロジェクト（確認テス�
    ```bash
    cp .env.example .env
    .envに下記項目を設定してください
-
-DB_CONNECTION=mysql
-DB_HOST=mysql
-DB_PORT=3306
-DB_DATABASE=laravel
-DB_USERNAME=sail
-DB_PASSWORD=password
+   DB_CONNECTION=mysql
+   DB_HOST=mysql
+   DB_PORT=3306
+   DB_DATABASE=laravel
+   DB_USERNAME=sail
+   DB_PASSWORD=password
    ```
-3. **Laravelパッケージのインストール**
 
+3. **Laravelパッケージのインストール**
 docker run --rm \
     -u "$(id -u):$(id -g)" \
     -v "$(pwd):/var/www/html" \
