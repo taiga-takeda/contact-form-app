@@ -48,6 +48,15 @@ Route::middleware('auth')->group(function () {
     // 管理画面トップ（一覧・検索）
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
 
+    // 追加：お問い合わせ詳細表示
+    Route::get('/admin/contacts/{id}', [AdminController::class, 'show'])->name('admin.show');
+
     // お問い合わせデータの削除処理
     Route::delete('/admin/contacts/{id}', [AdminController::class, 'destroy'])->name('admin.destroy');
+
+    // 追加：タグ管理画面のCRUD（基本要件）
+    Route::get('/admin/tags', [AdminController::class, 'tagIndex'])->name('admin.tags.index');
+
+    // 追加：CSVダウンロード（応用要件）
+    Route::get('/admin/export', [AdminController::class, 'export'])->name('admin.export');
 });

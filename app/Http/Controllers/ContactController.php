@@ -11,8 +11,9 @@ class ContactController extends Controller
     public function index()
     {
         $categories = Category::all();
+        $tags = \App\Models\Tag::all();
 
-        return view('contact.index', compact('categories'));
+        return view('contact.index', compact('categories', 'tags'));
     }
 
     // PG02: 確認画面を表示

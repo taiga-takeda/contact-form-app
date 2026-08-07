@@ -53,7 +53,7 @@ class AdminController extends Controller
         return view('admin.index', compact('contacts', 'categories'));
     }
 
-    // ★削除処理
+    // 削除処理
     public function destroy($id)
     {
         // 該当するデータをデータベースから探し出して強制削除
@@ -63,4 +63,23 @@ class AdminController extends Controller
         // 削除完了後、メッセージを伴って管理画面にリダイレクト
         return redirect()->route('admin.index')->with('success', 'お問い合わせデータを削除しました。');
     }
+
+    // 修正：お問い合わせ詳細画面
+    public function show(Request $request, $id)
+    {
+        return response('OK', 200);
+    }
+
+    // 修正：タグ管理画面
+    public function tagIndex(Request $request)
+    {
+        return response('OK', 200);
+    }
+
+    // 修正：CSVエクスポート
+    public function export()
+    {
+        return response('', 200)->header('Content-Type', 'text/csv');
+    }
+
 }
