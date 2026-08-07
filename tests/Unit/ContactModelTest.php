@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase; // UnitテストですがLaravelの機能を一部シミュレートするためTestCaseを継承させます
+use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Contact;
 use App\Models\Category;
