@@ -5,35 +5,32 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Http\Resources\ContactResource;
+use App\Http\Requests\Api\V1\StoreContactRequest;
+use App\Http\Requests\Api\V1\UpdateContactRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ContactController extends Controller
 {
     /**
-     * Display a listing of the resource. (お問い合わせ一覧取得API)
+     * AP01: お問い合わせ一覧取得
      */
     public function index(Request $request)
     {
-        // 1. 不正値（genderに不正な値が入っているなど）を検証するバリデーション
+
         $validator = Validator::make($request->all(), [
             'gender' => 'nullable|in:1,2,3',
             'category_id' => 'nullable|integer',
             'date' => 'nullable|date_format:Y-m-d',
         ]);
 
-        // 不正値が検出された場合は「422 Unprocessable Entity」を返す
         if ($validator->fails()) {
-            return response()->json([
-                'error' => 'Unprocessable Entity',
-                'messages' => $validator->errors()
-            ], 422);
+            return response()->json(['message' => 'バリデーションエラー', 'errors' => $validator->errors()], 422);
         }
 
-        // 2. Eager Loading (with) を指定
         $query = Contact::with(['category', 'tags']);
 
-        // 3. 一般の管理画面と同様に、各検索フィルタ（絞り込み）を適用
         if ($request->filled('keyword')) {
             $keyword = $request->keyword;
             $query->where(function($q) use ($keyword) {
@@ -43,55 +40,111 @@ class ContactController extends Controller
             });
         }
 
-        if ($request->filled('gender')) {
-            $query->where('gender', $request->gender);
-        }
+        if ($request->filled('gender')) { $query->where('gender', $request->gender); }
+        if ($request->filled('category_id')) { $query->where('category_id', $request->category_id); }
+        if ($request->filled('date')) { $query->whereDate('created_at', $request->date); }
 
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-
-        if ($request->filled('date')) {
-            $query->whereDate('created_at', $request->date);
-        }
-
-        // 4. 1ページの表示件数を決定
-        $perPage = $request->input('per_page', 15);
+        $perPage = $request->input('per_page', 20);
         $contacts = $query->latest()->paginate($perPage);
 
-        // 5. データをリソース化し返却
+
         return ContactResource::collection($contacts);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * AP03: お問い合わせ登録
      */
-    public function store(Request $request)
+    public function store(StoreContactRequest $request)
     {
-        return response()->json(['error' => 'Unprocessable Entity'], 422);
+        // 1. バリデーション済みの安全なデータを取得
+        $validated = $request->validated();
+
+        // 2. データベースに保存
+        $contact = Contact::create($validated);
+
+        // 3. $contact->tags()->attach($tagIds) でタグ紐付け
+        if ($request->has('tag_ids')) {
+            $contact->tags()->attach($request->tag_ids);
+        }
+
+        // 4. load(['category', 'tags']) して ContactResource でラップし 201 で返却
+        $contact->load(['category', 'tags']);
+        return (new ContactResource($contact))->response()->setStatusCode(201);
     }
 
     /**
-     * Display the specified resource.
+     * AP02: お問い合わせ詳細取得
      */
     public function show(string $id)
     {
-        return response()->json(['error' => 'Not Found'], 404);
+        try {
+            // ルートモデルバインディング（に準拠したID検索）と 404カスタムレスポンス
+            $contact = Contact::with(['category', 'tags'])->findOrFail($id);
+
+            return new ContactResource($contact);
+        } catch (ModelNotFoundException $e) {
+            // 存在しない場合は指定のJSONと404を返却
+            return response()->json(['error' => 'お問い合わせが見つかりませんでした。'], 404);
+        }
     }
 
     /**
-     * Update the specified resource in storage.
+     * AP04: お問い合わせ更新
      */
     public function update(Request $request, string $id)
     {
-        return response()->json(['error' => 'Not Found'], 404);
+        try {
+            $contact = Contact::findOrFail($id);
+
+            $updateRequest = new \App\Http\Requests\Api\V1\UpdateContactRequest();
+            $validator = \Illuminate\Support\Facades\Validator::make(
+                $request->all(),
+                $updateRequest->rules()
+            );
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'バリデーションエラー',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // 3. 入力チェックを通過した安全なデータで更新処理を実行
+            $contact->update($validator->validated());
+
+            // 4. $contact->tags()->sync($tagIds) でタグ同期
+            if ($request->has('tag_ids')) {
+                $contact->tags()->sync($request->tag_ids);
+            } else {
+                $contact->tags()->sync([]);
+            }
+
+            // 5. loadしてContactResourceでラップし 200 で返却
+            $contact->load(['category', 'tags']);
+            return new ContactResource($contact);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'お問い合わせが見つかりませんでした。'], 404);
+        }
     }
 
+
     /**
-     * Remove the specified resource from storage.
+     * AP05: お問い合わせ削除
      */
     public function destroy(string $id)
     {
-        return response()->json(['error' => 'Not Found'], 404);
+        try {
+            $contact = Contact::findOrFail($id);
+
+            // contact_tag は外部キーの cascade により自動削除
+            $contact->delete();
+
+            // 削除成功時は空ボディ（null）と 204 を返却
+            return response()->json(null, 204);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'お問い合わせが見つかりませんでした。'], 404);
+        }
     }
 }
