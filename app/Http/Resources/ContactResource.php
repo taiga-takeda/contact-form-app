@@ -39,7 +39,7 @@ class ContactResource extends JsonResource
                 ];
             })->toArray(),
 
-            // 日時をISO 8601形式に変換
+            // 日時をISO 8601形式へ変換
             'created_at'   => $this->created_at->toIso8601String(),
             'updated_at'   => $this->updated_at->toIso8601String(),
         ];

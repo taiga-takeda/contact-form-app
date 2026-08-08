@@ -59,7 +59,7 @@ class ContactController extends Controller
         $perPage = $request->input('per_page', 15);
         $contacts = $query->latest()->paginate($perPage);
 
-        // 5. データをリソース化して返却
+        // 5. データをリソース化し返却
         return ContactResource::collection($contacts);
     }
 
