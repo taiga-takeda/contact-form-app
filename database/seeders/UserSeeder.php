@@ -2,15 +2,15 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        //管理者アカウントを作成
+        // 管理者アカウントを作成
         User::create([
             'name' => 'Test User',
             'email' => 'test@example.com',

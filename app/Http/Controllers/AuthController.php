@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -20,21 +22,21 @@ class AuthController extends Controller
     {
         // バリデーションルール（仕様書通り：名前必須、メール必須・一意、パスワード8文字以上）
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
         ], [
             'required' => ':attributeは必須入力です。',
-            'email'    => 'メールアドレスはメール形式で入力してください。',
-            'unique'   => 'このメールアドレスは既に登録されています。',
-            'min'      => 'パスワードは8文字以上で入力してください。',
+            'email' => 'メールアドレスはメール形式で入力してください。',
+            'unique' => 'このメールアドレスは既に登録されています。',
+            'min' => 'パスワードは8文字以上で入力してください。',
         ]);
 
         // データベース（usersテーブル）に新の管理者を保存
-        // パスワードは必ず Hash::make() で暗号化（ハッシュ化）して保存します
+
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
+            'name' => $request->name,
+            'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
@@ -54,16 +56,31 @@ class AuthController extends Controller
     // 4. ログイン処理
     public function login(Request $request)
     {
-        // 入力チェック
+
+        $throttleKey = Str::lower($request->input('email')).'|'.$request->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            return back()->withErrors([
+                'email' => "制限回数を超えました。{$seconds}秒後に再度お試しください。",
+            ])->onlyInput('email');
+        }
+
         $credentials = $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required',
         ], [
-            'required' => ':attributeを入力してください。',
+            'email.required' => 'メールアドレスを入力してください',
+            'email.email' => 'メールアドレスは正しい形式で入力してください',
+            'password.required' => 'パスワードを入力してください',
         ]);
 
         // ログイン試行
         if (Auth::attempt($credentials)) {
+
+            RateLimiter::clear($throttleKey);
+
             // セッションの再生成（セキュリティ対策）
             $request->session()->regenerate();
 
@@ -71,9 +88,10 @@ class AuthController extends Controller
             return redirect('/admin');
         }
 
-        // 認証失敗：エラーメッセージを伴ってログイン画面に戻す
+        RateLimiter::hit($throttleKey, 60);
+
         return back()->withErrors([
-            'login_error' => 'ログイン情報が登録されていません',
+            'email' => 'ログイン情報が登録されていません',
         ])->onlyInput('email');
     }
 

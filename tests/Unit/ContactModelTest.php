@@ -2,12 +2,12 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Models\Contact;
 use App\Models\Category;
+use App\Models\Contact;
 use App\Models\Tag;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Validator;
+use Tests\TestCase;
 
 class ContactModelTest extends TestCase
 {
@@ -20,7 +20,7 @@ class ContactModelTest extends TestCase
         $category = Category::create(['content' => 'テスト']);
         $contact = Contact::create([
             'category_id' => $category->id, 'first_name' => 'T', 'last_name' => 'U',
-            'gender' => 1, 'email' => 'u@ex.com', 'tel' => '09000000000', 'address' => 'A', 'detail' => 'D'
+            'gender' => 1, 'email' => 'u@ex.com', 'tel' => '09000000000', 'address' => 'A', 'detail' => 'D',
         ]);
         $this->assertTrue($category->contacts->contains($contact));
     }
@@ -31,7 +31,7 @@ class ContactModelTest extends TestCase
         $tag = Tag::create(['name' => '不具合報告']);
         $contact = Contact::create([
             'category_id' => $category->id, 'first_name' => 'T', 'last_name' => 'U',
-            'gender' => 1, 'email' => 'u@ex.com', 'tel' => '09000000000', 'address' => 'A', 'detail' => 'D'
+            'gender' => 1, 'email' => 'u@ex.com', 'tel' => '09000000000', 'address' => 'A', 'detail' => 'D',
         ]);
         $contact->tags()->attach($tag->id);
 
@@ -45,7 +45,7 @@ class ContactModelTest extends TestCase
         $tag = Tag::create(['name' => 'ご意見']);
         $contact = Contact::create([
             'category_id' => $category->id, 'first_name' => 'T', 'last_name' => 'U',
-            'gender' => 1, 'email' => 'u@ex.com', 'tel' => '09000000000', 'address' => 'A', 'detail' => 'D'
+            'gender' => 1, 'email' => 'u@ex.com', 'tel' => '09000000000', 'address' => 'A', 'detail' => 'D',
         ]);
         $tag->contacts()->attach($contact->id);
         $this->assertTrue($tag->contacts->contains($contact));

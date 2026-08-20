@@ -8,8 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Tag extends Model
 {
     use HasFactory;
+
     protected $fillable = ['name'];
-    public function contacts() {
-    return $this->belongsToMany(Contact::class);
-}
+
+    public function contacts()
+    {
+        return $this->belongsToMany(Contact::class);
+    }
 }

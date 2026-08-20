@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ContactController;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ContactController;
+use Illuminate\Support\Facades\Route;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -24,39 +24,29 @@ Route::post('/contacts', [ContactController::class, 'store'])->name('contact.sto
 
 /*
 |--------------------------------------------------------------------------
-| 認証・管理者向けルート（基本要件）
-|--------------------------------------------------------------------------
-*/
-
-// 管理者登録画面の表示と登録処理
-Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
-
-// ログイン画面の表示とログイン処理
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-
-// ログアウト処理
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-/*
-|--------------------------------------------------------------------------
-| 管理画面ルート（基本要件）
+| 管理画面ルート（認証が必要なページ）
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
-    // 管理画面トップ（一覧・検索）
+    // 管理画面トップ（一覧・検索、およびタグ一覧表示）
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
 
-    // 追加：お問い合わせ詳細表示
+    // 🟢 1. CSVダウンロード（要件の /contacts/export と テストコード用の /admin/export 両方に対応）
+    Route::get('/contacts/export', [AdminController::class, 'export'])->name('admin.export');
+    Route::get('/admin/export', [AdminController::class, 'export']);
+
+    // お問い合わせ詳細表示
     Route::get('/admin/contacts/{id}', [AdminController::class, 'show'])->name('admin.show');
 
     // お問い合わせデータの削除処理
     Route::delete('/admin/contacts/{id}', [AdminController::class, 'destroy'])->name('admin.destroy');
 
-    // 追加：タグ管理画面のCRUD（基本要件）
-    Route::get('/admin/tags', [AdminController::class, 'tagIndex'])->name('admin.tags.index');
+    // 提供されたフォーム（POST）に加えて、テストコードが呼び出すURL（GET）の窓口も用意します
+    Route::post('/admin/tags', [AdminController::class, 'tagStore'])->name('admin.tags.store');
+    Route::delete('/admin/tags/{id}', [AdminController::class, 'tagDestroy'])->name('admin.tags.destroy');
+    Route::get('/admin/tags', [AdminController::class, 'index'])->name('admin.tags.index');
 
-    // 追加：CSVダウンロード（応用要件）
-    Route::get('/admin/export', [AdminController::class, 'export'])->name('admin.export');
+    // 🔴【追加】詳細リスト33行目・35行目：タグの「編集画面表示」と「更新処理」のルートを追加
+    Route::get('/admin/tags/{id}/edit', [AdminController::class, 'tagEdit'])->name('admin.tags.edit');
+    Route::put('/admin/tags/{id}', [AdminController::class, 'tagUpdate'])->name('admin.tags.update');
 });

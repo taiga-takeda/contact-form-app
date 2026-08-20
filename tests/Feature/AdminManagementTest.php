@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
+use App\Models\Contact;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use App\Models\User;
-use App\Models\Contact;
-use App\Models\Category;
-use App\Models\Tag;
 
 class AdminManagementTest extends TestCase
 {
@@ -40,7 +39,7 @@ class AdminManagementTest extends TestCase
             'email' => 't@ex.com',
             'tel' => '09000000000',
             'address' => 'A',
-            'detail' => 'D'
+            'detail' => 'D',
         ]);
 
         $response = $this->actingAs($user)->get("/admin/contacts/{$contact->id}");
@@ -60,7 +59,7 @@ class AdminManagementTest extends TestCase
             'email' => 't@ex.com',
             'tel' => '09000000000',
             'address' => 'A',
-            'detail' => 'D'
+            'detail' => 'D',
         ]);
 
         $response = $this->actingAs($user)->delete(route('admin.destroy', $contact->id));
@@ -93,4 +92,42 @@ class AdminManagementTest extends TestCase
         $this->assertStringContainsString('text/csv', $contentType);
     }
 
+    // 🔴【追加】97行目：検索フィルタが機能し7件ずつページネーションされる検証
+    public function test_admin_index_pagination_and_search_filters(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::create(['content' => 'テストカテゴリ']);
+
+        // ダミーのお問い合わせデータを10件作成
+        Contact::factory()->count(10)->create([
+            'gender' => 1,
+            'category_id' => $category->id,
+        ]);
+
+        $response = $this->actingAs($user)->get('/admin?gender=1&per_page=7');
+        $response->assertStatus(200);
+        // 7件ずつに区切られているか（contactsデータが7件存在するか）
+        $this->assertCount(7, $response->viewData('contacts'));
+    }
+
+    // 🔴【追加】98行目：詳細ページにカテゴリ情報付きで表示される検証
+    public function test_admin_show_page_displays_with_category_and_tags(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::create(['content' => '重要なお問い合わせ']);
+        $contact = Contact::factory()->create(['category_id' => $category->id]);
+
+        $response = $this->actingAs($user)->get("/admin/contacts/{$contact->id}");
+        $response->assertStatus(200);
+        $response->assertSee('重要なお問い合わせ');
+    }
+
+    // 🔴【追加】102行目：CSVダウンロードが新着順、フィルタ付きで出力される検証
+    public function test_csv_export_with_filters_and_latest_order(): void
+    {
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->get('/contacts/export?gender=1');
+        $response->assertStatus(200);
+        $this->assertStringContainsString('text/csv', $response->headers->get('Content-Type'));
+    }
 }

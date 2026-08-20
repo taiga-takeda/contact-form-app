@@ -2,11 +2,10 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use App\Models\Category;
 use App\Models\Tag;
-use App\Models\Contact;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ContactFormTest extends TestCase
 {
@@ -29,13 +28,13 @@ class ContactFormTest extends TestCase
         $category = Category::create(['content' => 'その他']);
         $response = $this->post('/contacts/confirm', [
             'category_id' => $category->id,
-            'first_name'  => '太郎',
-            'last_name'   => '山田',
-            'gender'      => 1,
-            'email'       => 'test@example.com',
-            'tel'         => '09012345678',
-            'address'     => '東京都',
-            'detail'      => '詳細内容です'
+            'first_name' => '太郎',
+            'last_name' => '山田',
+            'gender' => 1,
+            'email' => 'test@example.com',
+            'tel' => '09012345678',
+            'address' => '東京都',
+            'detail' => '詳細内容です',
         ]);
         $response->assertStatus(200);
         $response->assertViewHas('validated');
@@ -49,14 +48,14 @@ class ContactFormTest extends TestCase
 
         $response = $this->post(route('contact.store'), [
             'category_id' => $category->id,
-            'first_name'  => '太郎',
-            'last_name'   => '山田',
-            'gender'      => 1,
-            'email'       => 'test@example.com',
-            'tel'         => '09012345678',
-            'address'     => '東京都',
-            'detail'      => '詳細内容です',
-            'tags'        => [$tag->id]
+            'first_name' => '太郎',
+            'last_name' => '山田',
+            'gender' => 1,
+            'email' => 'test@example.com',
+            'tel' => '09012345678',
+            'address' => '東京都',
+            'detail' => '詳細内容です',
+            'tags' => [$tag->id],
         ]);
 
         $response->assertRedirect(route('contact.thanks'));
@@ -103,5 +102,25 @@ class ContactFormTest extends TestCase
     {
         $response = $this->json('DELETE', '/api/v1/contacts/99999');
         $response->assertStatus(404);
+    }
+
+    // 🔴【追加】101行目：入力画面でカテゴリ・タグが表示され、サンクスページが正常に表示される検証
+    public function test_contact_form_displays_variables_and_shows_thanks_page(): void
+    {
+        // 1. テスト用のカテゴリとタグを作成
+        $category = Category::create(['content' => '質問・お問い合わせ']);
+        $tag = Tag::create(['name' => 'お急ぎ']);
+
+        // 2. 入力画面にアクセスし、変数や文字が表示されているか検証
+        $response = $this->get('/');
+        $response->assertStatus(200);
+        $response->assertViewHas('categories');
+        $response->assertViewHas('tags');
+        $response->assertSee('質問・お問い合わせ');
+        $response->assertSee('お急ぎ');
+
+        // 3. サンクスページに直接アクセスして正常に表示されるか検証
+        $thanksResponse = $this->get('/thanks');
+        $thanksResponse->assertStatus(200);
     }
 }

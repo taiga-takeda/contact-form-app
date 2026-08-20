@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Contact;
-use App\Http\Resources\ContactResource;
 use App\Http\Requests\Api\V1\StoreContactRequest;
 use App\Http\Requests\Api\V1\UpdateContactRequest;
+use App\Http\Resources\ContactResource;
+use App\Models\Contact;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ContactController extends Controller
 {
@@ -33,20 +33,25 @@ class ContactController extends Controller
 
         if ($request->filled('keyword')) {
             $keyword = $request->keyword;
-            $query->where(function($q) use ($keyword) {
-                $q->where('first_name', 'like', '%' . $keyword . '%')
-                  ->orWhere('last_name', 'like', '%' . $keyword . '%')
-                  ->orWhere('email', 'like', '%' . $keyword . '%');
+            $query->where(function ($q) use ($keyword) {
+                $q->where('first_name', 'like', '%'.$keyword.'%')
+                    ->orWhere('last_name', 'like', '%'.$keyword.'%')
+                    ->orWhere('email', 'like', '%'.$keyword.'%');
             });
         }
 
-        if ($request->filled('gender')) { $query->where('gender', $request->gender); }
-        if ($request->filled('category_id')) { $query->where('category_id', $request->category_id); }
-        if ($request->filled('date')) { $query->whereDate('created_at', $request->date); }
+        if ($request->filled('gender')) {
+            $query->where('gender', $request->gender);
+        }
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
 
         $perPage = $request->input('per_page', 20);
         $contacts = $query->latest()->paginate($perPage);
-
 
         return ContactResource::collection($contacts);
     }
@@ -69,6 +74,7 @@ class ContactController extends Controller
 
         // 4. load(['category', 'tags']) して ContactResource でラップし 201 で返却
         $contact->load(['category', 'tags']);
+
         return (new ContactResource($contact))->response()->setStatusCode(201);
     }
 
@@ -96,8 +102,8 @@ class ContactController extends Controller
         try {
             $contact = Contact::findOrFail($id);
 
-            $updateRequest = new \App\Http\Requests\Api\V1\UpdateContactRequest();
-            $validator = \Illuminate\Support\Facades\Validator::make(
+            $updateRequest = new UpdateContactRequest;
+            $validator = Validator::make(
                 $request->all(),
                 $updateRequest->rules()
             );
@@ -105,7 +111,7 @@ class ContactController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'message' => 'バリデーションエラー',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -121,13 +127,13 @@ class ContactController extends Controller
 
             // 5. loadしてContactResourceでラップし 200 で返却
             $contact->load(['category', 'tags']);
+
             return new ContactResource($contact);
 
         } catch (ModelNotFoundException $e) {
             return response()->json(['error' => 'お問い合わせが見つかりませんでした。'], 404);
         }
     }
-
 
     /**
      * AP05: お問い合わせ削除
